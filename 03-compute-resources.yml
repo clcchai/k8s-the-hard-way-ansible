@@ -45,7 +45,7 @@
         instance_names: controller-0,controller-1,controller-2
         machine_type: "{{ machine_type }}"
         metadata: "{{ metadata}}"
-        image: "{{ image }}"
+        image: "{{ image }}"        
         disk_size: 200
         ip_forward: true
         service_account_permissions:

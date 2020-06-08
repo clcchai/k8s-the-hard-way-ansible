@@ -36,9 +36,26 @@
         - { src: '{{ inventory_hostname }}.pem', dest: '/var/lib/kubelet/{{ inventory_hostname }}.pem' }
         - { src: '{{ inventory_hostname }}-key.pem', dest: '/var/lib/kubelet/{{ inventory_hostname }}-key.pem' }
 
-  roles:
-    - kubectl
-    - cni
-    - cri
-    - kubelet
-    - kube-proxy
+          # roles:
+          #   - kubectl
+          #   - cni
+          #   - cri
+          #   - kubelet
+          #   - kube-proxy
+
+  tasks:
+    - include_role:
+        name: kubectl
+      tags: kubectl
+    - include_role:
+        name: cri
+      tags: cri
+    - include_role:
+        name: cni
+      tags: cni
+    - include_role:
+        name: kubelet
+      tags: kubelet
+    - include_role:
+        name: kube-proxy
+      tags: kube-proxy

@@ -9,6 +9,7 @@
   with_items:
     - /var/lib/kubernetes
     - /var/run/kubernetes
+    - /etc/kubernetes/config
 
 - include: install.yml
 

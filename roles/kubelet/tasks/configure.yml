@@ -34,4 +34,3 @@
     chdir: /var/lib/kubelet
     creates: /var/lib/kubelet/kubeconfig
   register: config
-  tags: kubelet

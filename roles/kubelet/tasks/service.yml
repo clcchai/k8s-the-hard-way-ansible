@@ -9,6 +9,11 @@
       Metadata-Flavor: "Google"
   register: pod_cidr
 
+- name: Configure kubelet config and present
+  template:
+    src: kubelet-config.yaml.j2
+    dest: /var/lib/kubelet/kubelet-config.yaml
+
 - name: Ensure kubelet systemd service is present
   template:
     src: kubelet.service.j2

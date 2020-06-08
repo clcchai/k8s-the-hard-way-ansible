@@ -1,18 +1,68 @@
 ---
 # tasks file for cri
 
-- name: nsure archive with CRI is downloaded
-  get_url:
-    url: https://github.com/kubernetes-incubator/cri-containerd/releases/download/v1.0.0-alpha.0/cri-containerd-1.0.0-alpha.0.tar.gz
-    dest: /opt/cri-containerd-1.0.0-alpha.0.tar.gz
-    checksum: "sha1:cc7732666529e7879ddc1adfe205a42ad5b3dccf"
+- name: Ensure dirs for nodes are present
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: 0750
+  with_items:
+    - /etc/cni/net.d 
+    - /opt/cni/bin
+    - /etc/containerd
 
-- name: Ensure archive with CRI is extracted
+
+- name: Ensure with CRI  is downloaded
+  get_url:
+    url:   https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.15.0/crictl-v1.15.0-linux-amd64.tar.gz 
+    dest: /opt/crictl-v1.15.0-linux-amd64.tar.gz 
+
+- name: Ensure archive with runc is downloaded
+  get_url:
+    url:   https://github.com/opencontainers/runc/releases/download/v1.0.0-rc8/runc.amd64 
+    dest: /opt/runc.amd64
+
+- name: Ensure archive with containerd is downloaded
+  get_url:
+    url:   https://github.com/containerd/containerd/releases/download/v1.2.9/containerd-1.2.9.linux-amd64.tar.gz
+    dest: /opt/containerd-1.2.9.linux-amd64.tar.gz
+
+
+- name: Ensure archive with CRI is extracted to /usr/local/bin
   unarchive:
-    src: /opt/cri-containerd-1.0.0-alpha.0.tar.gz
-    dest: /
+    src: /opt/crictl-v1.15.0-linux-amd64.tar.gz
+    dest: /usr/local/bin
     remote_src: yes
-    creates: /usr/local/sbin/runc
+    mode: 0755
+    creates: /usr/local/bin/crictl
+
+- name: Ensure archive with containerd is extracted to /tmp
+  unarchive:
+    src: /opt/containerd-1.2.9.linux-amd64.tar.gz
+    dest: /tmp
+    remote_src: yes
+    mode: 0755
+
+- name: run a bunch of files move for containerd and crictl, runc
+  shell: |
+    sudo mv /opt/runc.amd64 /opt/runc
+    sudo chmod +x /opt/runc 
+    sudo chmod +x /tmp/
+    sudo mv /opt/runc /usr/local/bin/
+    sudo mv /tmp/bin/* /bin/
+  become: yes
+
+
+- name: Configure containerd configurations
+  copy:
+    src: config.toml
+    dest: /etc/containerd/config.toml
+
+- name: Ensure containerd systemd service is present
+  copy:
+    src: containerd.service
+    dest: /etc/systemd/system/containerd.service
+
 
 - name: Ensure services are running
   service:
@@ -21,4 +71,3 @@
     state: started
   with_items:
     - containerd
-    - cri-containerd

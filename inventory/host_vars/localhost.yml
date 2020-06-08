@@ -1,5 +1,6 @@
 ---
 
-image: ubuntu-1604-xenial-v20171011
+image: ubuntu-1804-bionic-v20200529
+image_project: ubuntu-os-cloud
 machine_type: n1-standard-1
 metadata: '{"sshKeys":"k8s:{{ lookup("file", "files/ssh/k8s_the_hard_way.pub") }}"}'
