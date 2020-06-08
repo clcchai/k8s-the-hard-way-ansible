@@ -6,6 +6,13 @@
   gather_facts: true
 
   pre_tasks:
+    - name: Ensure kubectl aries are present
+      get_url:
+        url: https://storage.googleapis.com/kubernetes-release/release/v1.15.3/bin/linux/amd64/{{ item }}
+        dest: /usr/local/bin
+        mode: 0755
+      with_items:
+        - kubectl
 
     - name: Ensure directory for Kubernates certificates is present
       file:
@@ -22,7 +29,91 @@
         - {src: ca-key.pem, dest: "/var/lib/kubernetes/ca-key.pem"}
         - {src: kubernetes.pem, dest: "/var/lib/kubernetes/kubernetes.pem"}
         - {src: kubernetes-key.pem, dest: "/var/lib/kubernetes/kubernetes-key.pem"}
+        - {src: kube-proxy.pem, dest: "/var/lib/kubernetes/kube-proxy.pem"}
+        - {src: kube-proxy-key.pem, dest: "/var/lib/kubernetes/kube-proxy-key.pem"}
+        - {src: kube-scheduler.pem, dest: "/var/lib/kubernetes/kube-scheduler.pem"}
+        - {src: kube-scheduler-key.pem, dest: "/var/lib/kubernetes/kube-scheduler-key.pem"}
+        - {src: kube-controller-manager.pem, dest: "/var/lib/kubernetes/kube-controller-manager.pem"}
+        - {src: kube-controller-manager-key.pem, dest: "/var/lib/kubernetes/kube-controller-manager-key.pem"}
+        - {src: service-account.pem, dest: "/var/lib/kubernetes/service-account.pem"}
+        - {src: service-account-key.pem, dest: "/var/lib/kubernetes/service-account-key.pem"}
+        - {src: admin.pem, dest: "/var/lib/kubernetes/admin.pem"}
+        - {src: admin-key.pem, dest: "/var/lib/kubernetes/admin-key.pem"}
         - {src: encryption-config.yaml, dest: "/var/lib/kubernetes/encryption-config.yaml"}
+  
+  tasks:
+    - name: Configure kube-controller-manager
+      shell: |
+        kubectl config set-cluster kubernetes-the-hard-way \
+          --certificate-authority=ca.pem \
+          --embed-certs=true \
+          --server=https://127.0.0.1:6443 \
+          --kubeconfig=kube-controller-manager.kubeconfig
+    
+        kubectl config set-credentials system:kube-controller-manager \
+          --client-certificate=kube-controller-manager.pem \
+          --client-key=kube-controller-manager-key.pem \
+          --embed-certs=true \
+          --kubeconfig=kube-controller-manager.kubeconfig
+    
+        kubectl config set-context default \
+          --cluster=kubernetes-the-hard-way \
+          --user=system:kube-controller-manager \
+          --kubeconfig=kube-controller-manager.kubeconfig
+    
+        kubectl config use-context default --kubeconfig=kube-controller-manager.kubeconfig
+      args:
+        chdir: /var/lib/kubernetes
+        creates: /var/lib/kubernetes/kube-controller-manager.kubeconfig
+    
+    - name: Configure admin user kubeconfg
+      shell: |
+        kubectl config set-cluster kubernetes-the-hard-way \
+          --certificate-authority=ca.pem \
+          --embed-certs=true \
+          --server=https://127.0.0.1:6443 \
+          --kubeconfig=admin.kubeconfig
+    
+        kubectl config set-credentials admin \
+          --client-certificate=admin.pem \
+          --client-key=admin-key.pem \
+          --embed-certs=true \
+          --kubeconfig=admin.kubeconfig
+    
+        kubectl config set-context default \
+          --cluster=kubernetes-the-hard-way \
+          --user=admin \
+          --kubeconfig=admin.kubeconfig
+    
+        kubectl config use-context default --kubeconfig=admin.kubeconfig
+      args:
+        chdir: /var/lib/kubernetes
+        creates: /var/lib/kubernetes/admin.kubeconfig
+    
+    
+    - name: Configure kube-scheduler
+      shell: |
+        kubectl config set-cluster kubernetes-the-hard-way \
+          --certificate-authority=ca.pem \
+          --embed-certs=true \
+          --server=https://127.0.0.1:6443 \
+          --kubeconfig=kube-scheduler.kubeconfig
+    
+        kubectl config set-credentials system:kube-scheduler \
+          --client-certificate=kube-scheduler.pem \
+          --client-key=kube-scheduler-key.pem \
+          --embed-certs=true \
+          --kubeconfig=kube-scheduler.kubeconfig
+    
+        kubectl config set-context default \
+          --cluster=kubernetes-the-hard-way \
+          --user=system:kube-scheduler \
+          --kubeconfig=kube-scheduler.kubeconfig
+    
+        kubectl config use-context default --kubeconfig=kube-scheduler.kubeconfig
+      args:
+        chdir: /var/lib/kubernetes
+        creates: /var/lib/kubernetes/kube-scheduler.kubeconfig
 
-  roles:
-    - kubernetes-master
+    - include_role:
+        name: kubernetes-master

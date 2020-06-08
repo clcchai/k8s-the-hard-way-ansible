@@ -12,20 +12,20 @@
       --certificate-authority=ca.pem \
       --embed-certs=true \
       --server=https://{{ gce_lb_public_ip }}:6443 \
-      --kubeconfig=kubeconfig
+      --kubeconfig=kube-proxy.kubeconfig
 
     kubectl config set-credentials kube-proxy \
       --client-certificate=kube-proxy.pem \
       --client-key=kube-proxy-key.pem \
       --embed-certs=true \
-      --kubeconfig=kubeconfig
+      --kubeconfig=kube-proxy.kubeconfig
 
     kubectl config set-context default \
       --cluster=kubernetes-the-hard-way \
-      --user=kube-proxy \
-      --kubeconfig=kubeconfig
+      --user=system:kube-proxy \
+      --kubeconfig=kube-proxy.kubeconfig
 
-    kubectl config use-context default --kubeconfig=kubeconfig
+    kubectl config use-context default --kubeconfig=kube-proxy.kubeconfig
   args:
     chdir: /var/lib/kube-proxy
-    creates: /var/lib/kube-proxy/kubeconfig
+    creates: /var/lib/kube-proxy/kube-proxy.kubeconfig

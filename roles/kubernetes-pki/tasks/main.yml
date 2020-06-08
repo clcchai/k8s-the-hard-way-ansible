@@ -17,6 +17,11 @@
     - { src: 'admin-csr.json', dest: '/opt/kubernetes-pki/admin-csr.json' }
     - { src: 'kube-proxy-csr.json', dest: '/opt/kubernetes-pki/kube-proxy-csr.json' }
     - { src: 'kubernetes-csr.json', dest: '/opt/kubernetes-pki/kubernetes-csr.json' }
+    - { src: 'kube-scheduler-csr.json', dest: '/opt/kubernetes-pki/kube-scheduler-csr.json' }
+    - { src: 'kube-controller-manager-csr.json', dest: '/opt/kubernetes-pki/kube-controller-manager-csr.json' }
+    - { src: 'service-account-csr.json', dest: '/opt/kubernetes-pki/service-account-csr.json' }
+
+
 
 - name: Ensure CA certificate and private key are present
   shell: cfssl gencert -initca ca-csr.json | cfssljson -bare ca
@@ -62,6 +67,18 @@
     - worker-1
     - worker-2
 
+- name: Ensure kube-controller-manager client certificate and private key are present
+  shell: |
+    cfssl gencert \
+      -ca=ca.pem \
+      -ca-key=ca-key.pem \
+      -config=ca-config.json \
+      -profile=kubernetes \
+      kube-controller-manager-csr.json | cfssljson -bare kube-controller-manager
+  args:
+    chdir: /opt/kubernetes-pki
+    creates: kube-controller-manager.pem
+
 - name: Ensure kube-proxy client certificate and private key are present
   shell: |
     cfssl gencert \
@@ -74,18 +91,44 @@
     chdir: /opt/kubernetes-pki
     creates: kube-proxy.pem
 
-- name: Ensure the Kubernetes API Server certificate and private key are present
+- name: Ensure kube-scheduler client certificate and private key are present
   shell: |
     cfssl gencert \
       -ca=ca.pem \
       -ca-key=ca-key.pem \
       -config=ca-config.json \
-      -hostname=10.32.0.1,{{ hostvars['controller-0']['gce_private_ip'] }},{{ hostvars['controller-1']['gce_private_ip'] }},{{ hostvars['controller-2']['gce_private_ip'] }},{{ gce_lb_public_ip }},127.0.0.1,kubernetes.default \
+      -profile=kubernetes \
+      kube-scheduler-csr.json | cfssljson -bare kube-scheduler
+  args:
+    chdir: /opt/kubernetes-pki
+    creates: kube-scheduler.pem
+
+- name: Ensure the Kubernetes API Server certificate and private key are present
+  shell: |
+    KUBERNETES_HOSTNAMES=kubernetes,kubernetes.default,kubernetes.default.svc,kubernetes.default.svc.cluster,kubernetes.svc.cluster.local
+
+    cfssl gencert \
+      -ca=ca.pem \
+      -ca-key=ca-key.pem \
+      -config=ca-config.json \
+      -hostname=10.32.0.1,{{ hostvars['controller-0']['gce_private_ip'] }},{{ hostvars['controller-1']['gce_private_ip'] }},{{ hostvars['controller-2']['gce_private_ip'] }},{{ gce_lb_public_ip }},127.0.0.1,${KUBERNETES_HOSTNAMES} \
       -profile=kubernetes \
       kubernetes-csr.json | cfssljson -bare kubernetes
   args:
     chdir: /opt/kubernetes-pki
     creates: kubernetes.pem
+
+- name: Ensure service-account client certificate and private key are present
+  shell: |
+    cfssl gencert \
+      -ca=ca.pem \
+      -ca-key=ca-key.pem \
+      -config=ca-config.json \
+      -profile=kubernetes \
+      service-account-csr.json | cfssljson -bare service-account
+  args:
+    chdir: /opt/kubernetes-pki
+    creates: service-account.pem
 
 - include: encryption.yml
 - include: fetch.yml

@@ -52,13 +52,13 @@
     - kubectl get clusterrolebindings -o name system:kube-apiserver
 
 - name: Ensure system:kube-apiserver-to-kubelet ClusterRole is present
-  shell: kubectl apply -f kube-apiserver-to-kubelet.role.yml
+  shell: kubectl apply  --kubeconfig admin.kubeconfig -f kube-apiserver-to-kubelet.role.yml
   args:
     chdir: /var/lib/kubernetes
   when: kubectl_api_kubelet.results.0.rc != 0
 
 - name: Bind the system:kube-apiserver-to-kubelet ClusterRole
-  shell: kubectl apply -f kube-apiserver-to-kubelet.rolebinding.yml
+  shell: kubectl apply --kubeconfig admin.kubeconfig -f kube-apiserver-to-kubelet.rolebinding.yml
   args:
     chdir: /var/lib/kubernetes
   when: kubectl_api_kubelet.results.1.rc != 0

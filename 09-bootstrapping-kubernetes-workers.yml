@@ -6,13 +6,24 @@
   gather_facts: true
 
   pre_tasks:
+    - name: Ensure kubectl binaries are present
+      get_url:
+        url: https://storage.googleapis.com/kubernetes-release/release/v1.15.3/bin/linux/amd64/{{ item }}
+        dest: /usr/local/bin
+        mode: 0755
+      with_items:
+        - kubectl
 
-    - name: Ensure socat is present
+    - name: Ensure these packages is present
       apt:
-        name: socat
+        name: "{{ item }}"
         state: present
         cache_valid_time: 3600
         update_cache: yes
+      with_items:
+        - socat
+        - conntrack
+        - ipset
 
     - name: Ensure directories for Kubelet are present
       file:
@@ -35,13 +46,6 @@
         - { src: 'kube-proxy-key.pem', dest: '/var/lib/kube-proxy/kube-proxy-key.pem' }
         - { src: '{{ inventory_hostname }}.pem', dest: '/var/lib/kubelet/{{ inventory_hostname }}.pem' }
         - { src: '{{ inventory_hostname }}-key.pem', dest: '/var/lib/kubelet/{{ inventory_hostname }}-key.pem' }
-
-          # roles:
-          #   - kubectl
-          #   - cni
-          #   - cri
-          #   - kubelet
-          #   - kube-proxy
 
   tasks:
     - include_role:

@@ -5,6 +5,9 @@
     src: kube-proxy.service
     dest: /etc/systemd/system/kube-proxy.service
 
+- name: just force systemd to reread configs (2.4 and above)
+  systemd: daemon_reload=yes
+  
 - name: Ensure kube-proxy services is running
   service:
     name: kube-proxy
