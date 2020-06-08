@@ -5,11 +5,13 @@ This repository contains ansible playbooks for automating all steps of [Kubernet
 > Install and configure The Google Cloud SDK https://cloud.google.com/sdk/downloads.
 
 ## Cluster Details
+```bash
 kubernetes 1.15.3
 containerd 1.2.9
 coredns v1.6.3
 cni v0.8.2
 etcd v3.4.0
+```
 
 ## Pre-Requirements
 
